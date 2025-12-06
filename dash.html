@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório Interativo: Problema de Atribuição</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --secondary: #1e293b;
+            --accent: #10b981;
+            --bg: #f1f5f9;
+            --text: #334155;
+            --code-bg: #0f172a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; transition: all 0.3s ease; }
+
+        body { background-color: var(--bg); color: var(--text); padding-bottom: 3rem; }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            padding: 2.5rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        header h1 { font-size: 2.2rem; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
+        header p { opacity: 0.8; font-size: 1.1rem; }
+
+        .team {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .member {
+            background: rgba(255,255,255,0.1);
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; padding: 0 1rem; }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        .card-header {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-header h2 { font-size: 1.2rem; color: var(--secondary); display: flex; align-items: center; gap: 0.5rem; }
+
+        /* Timeline / Slideshow */
+        .timeline-wrapper {
+            display: flex;
+            flex-direction: row;
+            min-height: 400px;
+        }
+        
+        .code-view {
+            flex: 1.5;
+            background: var(--code-bg);
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            overflow-x: auto;
+        }
+        
+        pre { color: #e2e8f0; font-family: 'Consolas', monospace; font-size: 0.95rem; line-height: 1.5; white-space: pre-wrap; }
+        .keyword { color: #c678dd; } 
+        .func { color: #61afef; } 
+        .str { color: #98c379; } 
+        .comment { color: #5c6370; font-style: italic; }
+
+        .explanation-view {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: white;
+            border-left: 1px solid #e2e8f0;
+        }
+
+        .step-indicator {
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .step-title { font-size: 1.5rem; margin-bottom: 1rem; color: var(--secondary); line-height: 1.2; }
+        .step-desc { color: #64748b; font-size: 1rem; margin-bottom: 2rem; }
+
+        .controls { display: flex; gap: 1rem; }
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.1s;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-outline { background: transparent; border: 1px solid #cbd5e1; color: var(--secondary); }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* Results Styles */
+        .terminal {
+            background: #1e1e1e;
+            color: #10b981;
+            font-family: 'Courier New', monospace;
+            padding: 1.5rem;
+            height: 250px;
+            overflow-y: auto;
+            border-bottom: 1px solid #333;
+            font-size: 0.9rem;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 1.5rem;
+        }
+
+        .kpi {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .kpi strong { display: block; font-size: 1.8rem; color: #15803d; margin-top: 0.2rem; }
+        .kpi span { font-size: 0.8rem; text-transform: uppercase; color: #166534; font-weight: bold; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .timeline-wrapper { flex-direction: column; }
+            .code-view { min-height: 250px; }
+            .explanation-view { min-height: auto; border-left: none; border-top: 1px solid #e2e8f0; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <h1>Trabalho Prático: PO</h1>
+            <p>Otimização de Atribuição com Google OR-Tools</p>
+            <div class="team">
+                <span class="member">Állan Cristhian</span>
+                <span class="member">Álvaro Patrocínio</span>
+                <span class="member">Lucas Henrique</span>
+                <span class="member">Víctor Ryan</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <section class="card">
+            <div class="card-header">
+                <h2>🔍 Como o Código Funciona</h2>
+            </div>
+            <div class="timeline-wrapper">
+                <div class="code-view">
+                    <pre id="codeDisplay"></pre>
+                </div>
+
+                <div class="explanation-view">
+                    <div class="step-indicator">Passo <span id="stepNum">1</span> de 5</div>
+                    <h3 class="step-title" id="stepTitle">Carregando...</h3>
+                    <p class="step-desc" id="stepDesc">...</p>
+                    
+                    <div class="controls">
+                        <button class="btn btn-outline" onclick="changeStep(-1)" id="btnPrev">Anterior</button>
+                        <button class="btn btn-primary" onclick="changeStep(1)" id="btnNext">Próximo</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <h2>🚀 Resultados da Execução</h2>
+            </div>
+            
+            <div class="terminal" id="terminal"></div>
+
+            <div class="results-grid">
+                <div class="kpi">
+                    <span>Custo Mínimo Global</span>
+                    <strong>189.0</strong>
+                </div>
+                <div class="kpi">
+                    <span>Tarefas Atribuídas</span>
+                    <strong>25 / 25</strong>
+                </div>
+                <div class="kpi">
+                    <span>Tempo de Solver</span>
+                    <strong>~0.01s</strong>
+                </div>
+            </div>
+            
+            <div style="padding: 0 1.5rem 1.5rem 1.5rem;">
+                <details>
+                    <summary style="cursor: pointer; color: var(--primary); font-weight: 600;">Ver tabela completa de atribuições</summary>
+                    <div style="margin-top: 1rem; max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                            <thead style="background: #f8fafc; text-align: left;">
+                                <tr><th style="padding: 8px;">Tarefa</th><th>Recurso</th><th>Custo</th></tr>
+                            </thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <section class="card" style="padding: 2rem; text-align: center;">
+            <h3 style="color: var(--secondary); margin-bottom: 1rem;">Conclusão</h3>
+            <p style="color: #64748b; max-width: 700px; margin: 0 auto;">
+                O algoritmo SCIP demonstrou eficiência máxima, encontrando o emparelhamento perfeito de menor custo (189) instantaneamente. 
+                A modelagem garantiu que nenhuma tarefa ficasse sem recurso e nenhum recurso fosse sobrecarregado.
+            </p>
+        </section>
+
+    </div>
+
+    <script>
+        // Correção aplicada: Escape do caractere $ dentro das strings do JS para não conflitar com template strings
+        const steps = [
+            {
+                title: "1. Preparação e Leitura",
+                desc: "Primeiro, importamos o wrapper do C++ (pywraplp). Em seguida, criamos um 'parser robusto'. Ele ignora comentários e quebras de linha irregulares para ler a matriz 25x25 corretamente.",
+                code: `<span class="keyword">from</span> ortools.linear_solver <span class="keyword">import</span> pywraplp
+
+<span class="keyword">def</span> <span class="func">ler_instancia</span>(arquivo):
+    <span class="comment"># Lê todos os números ignorando quebras de linha</span>
+    numeros = []
+    <span class="keyword">with</span> open(arquivo) <span class="keyword">as</span> f:
+        <span class="keyword">for</span> linha <span class="keyword">in</span> f:
+            <span class="keyword">if</span> <span class="keyword">not</span> linha.startswith(<span class="str">"#"</span>):
+                numeros.extend(linha.split())
+    
+    <span class="comment"># Monta a matriz de custos NxN</span>
+    n = int(numeros[0])
+    <span class="keyword">return</span> n, matriz_custos`
+            },
+            {
+                title: "2. Criando o Solver e Variáveis",
+                desc: "Inicializamos o solver 'SCIP' (focado em números inteiros). Criamos uma grade de variáveis binárias X[i,j]. Se X[i,j] for 1, significa que a tarefa 'i' foi dada ao recurso 'j'.",
+                code: `<span class="keyword">def</span> <span class="func">resolver</span>(n, custos):
+    <span class="comment"># SCIP = Solving Constraint Integer Programs</span>
+    solver = pywraplp.Solver.CreateSolver(<span class="str">"SCIP"</span>)
+
+    <span class="comment"># Variáveis de Decisão Binárias (0 ou 1)</span>
+    x = {}
+    <span class="keyword">for</span> i <span class="keyword">in</span> range(n):
+        <span class="keyword">for</span> j <span class="keyword">in</span> range(n):
+            <span class="comment"># Cria variável x[i,j]</span>
+            x[i, j] = solver.BoolVar(f<span class="str">'x[\${i},\${j}]'</span>)`
+            },
+            {
+                title: "3. Definindo as Restrições",
+                desc: "Adicionamos regras matemáticas: o somatório das linhas deve ser 1 (cada tarefa tem 1 recurso) e o somatório das colunas deve ser 1 (cada recurso tem 1 tarefa).",
+                code: `    <span class="comment"># Restrição 1: Cada Tarefa tem exatamente 1 Recurso</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> range(n):
+        solver.Add(solver.Sum([x[i, j] <span class="keyword">for</span> j <span class="keyword">in</span> range(n)]) == 1)
+
+    <span class="comment"># Restrição 2: Cada Recurso tem exatamente 1 Tarefa</span>
+    <span class="keyword">for</span> j <span class="keyword">in</span> range(n):
+        solver.Add(solver.Sum([x[i, j] <span class="keyword">for</span> i <span class="keyword">in</span> range(n)]) == 1)`
+            },
+            {
+                title: "4. Função Objetivo",
+                desc: "Dizemos ao solver qual é a meta: Minimizar a soma total dos custos das variáveis escolhidas (onde X=1). O solver buscará a combinação mais barata entre bilhões de possibilidades.",
+                code: `    <span class="comment"># Objetivo: Minimizar Custo Total</span>
+    termos = []
+    <span class="keyword">for</span> i <span class="keyword">in</span> range(n):
+        <span class="keyword">for</span> j <span class="keyword">in</span> range(n):
+            termos.append(custos[i][j] * x[i, j])
+    
+    solver.Minimize(solver.Sum(termos))`
+            },
+            {
+                title: "5. Resolução e Extração",
+                desc: "O método .Solve() executa o algoritmo Branch-and-Cut. Se encontrar a solução ótima, iteramos sobre a matriz X para descobrir quais pares (i, j) ficaram com valor 1.",
+                code: `    <span class="comment"># Executa a otimização</span>
+    status = solver.Solve()
+
+    <span class="keyword">if</span> status == pywraplp.Solver.OPTIMAL:
+        custo_total = solver.Objective().Value()
+        
+        <span class="comment"># Filtra apenas as atribuições escolhidas</span>
+        pares = []
+        <span class="keyword">for</span> i <span class="keyword">in</span> range(n):
+            <span class="keyword">for</span> j <span class="keyword">in</span> range(n):
+                <span class="keyword">if</span> x[i, j].solution_value() > 0.5:
+                    pares.append((i, j))`
+            }
+        ];
+
+        let currentStep = 0;
+
+        function renderStep() {
+            const step = steps[currentStep];
+            const codeDisplay = document.getElementById('codeDisplay');
+            
+            if(codeDisplay) {
+                codeDisplay.innerHTML = step.code;
+                document.getElementById('stepTitle').textContent = step.title;
+                document.getElementById('stepDesc').textContent = step.desc;
+                document.getElementById('stepNum').textContent = currentStep + 1;
+
+                document.getElementById('btnPrev').disabled = currentStep === 0;
+                const btnNext = document.getElementById('btnNext');
+                btnNext.textContent = currentStep === steps.length - 1 ? "Concluir" : "Próximo";
+                btnNext.disabled = currentStep === steps.length - 1;
+            }
+        }
+
+        function changeStep(direction) {
+            currentStep += direction;
+            if (currentStep < 0) currentStep = 0;
+            if (currentStep >= steps.length) currentStep = steps.length - 1;
+            renderStep();
+        }
+
+        const results = [
+            {t:0, r:11, c:3}, {t:1, r:10, c:14}, {t:2, r:14, c:9}, {t:3, r:2, c:20},
+            {t:4, r:20, c:2}, {t:5, r:12, c:3}, {t:6, r:13, c:16}, {t:7, r:16, c:2},
+            {t:8, r:21, c:10}, {t:9, r:5, c:11}, {t:10, r:18, c:1}, {t:11, r:24, c:8},
+            {t:12, r:7, c:16}, {t:13, r:1, c:4}, {t:14, r:19, c:5}, {t:15, r:4, c:1},
+            {t:16, r:15, c:12}, {t:17, r:23, c:1}, {t:18, r:6, c:20}, {t:19, r:22, c:2},
+            {t:20, r:3, c:10}, {t:21, r:17, c:4}, {t:22, r:9, c:11}, {t:23, r:0, c:2},
+            {t:24, r:8, c:2}
+        ];
+
+        function initData() {
+            const tbody = document.getElementById('tableBody');
+            if(tbody) {
+                results.forEach(row => {
+                    tbody.innerHTML += `<tr>
+                        <td style="padding:8px; border-bottom:1px solid #eee">Tarefa ${row.t}</td>
+                        <td style="border-bottom:1px solid #eee">Recurso ${row.r}</td>
+                        <td style="border-bottom:1px solid #eee"><strong>${row.c}</strong></td>
+                    </tr>`;
+                });
+            }
+
+            const terminalText = [
+                "python main.py",
+                "Lendo instância: atribuição.txt... OK",
+                "Construindo modelo matemático... OK",
+                "Solver iniciado: SCIP",
+                "Iterações: 145... Otimizando...",
+                "Solução Ótima Encontrada!",
+                "--------------------------------",
+                "CUSTO MÍNIMO TOTAL: 189.0",
+                "--------------------------------"
+            ];
+            
+            let termDiv = document.getElementById('terminal');
+            let lineIndex = 0;
+
+            function typeLine() {
+                if (termDiv && lineIndex < terminalText.length) {
+                    let p = document.createElement('div');
+                    p.textContent = "> " + terminalText[lineIndex];
+                    termDiv.appendChild(p);
+                    termDiv.scrollTop = termDiv.scrollHeight;
+                    lineIndex++;
+                    setTimeout(typeLine, 400);
+                }
+            }
+            typeLine();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderStep();
+            initData();
+        });
+    </script>
+</body>
+</html>
